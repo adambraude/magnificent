@@ -87,6 +87,33 @@ tier2Deck = [
 (4, 3, 0, 0, 0, 6, 0)
     ]
 
+tier3Deck = [
+(0, 3, 3, 3, 5, 3, 0),
+(0, 4, 0, 0, 0, 7, 0),
+(0, 4, 0, 0, 3, 6, 3),
+(0, 5, 0, 0, 0, 7, 3),
+
+(1, 3, 3, 0, 3, 3, 5),
+(1, 4, 7, 0, 0, 0, 0),
+(1, 4, 6, 3, 0, 0, 3),
+(1, 5, 7, 3, 0, 0, 0),
+
+(2, 3, 0, 3, 3, 5, 3),
+(2, 4, 0, 0, 0, 0, 7),
+(2, 4, 3, 0, 0, 3, 6),
+(2, 5, 3, 0, 0, 0, 7),
+
+(3, 3, 5, 3, 0, 3, 3),
+(3, 4, 0, 7, 0, 0, 0),
+(3, 4, 3, 6, 3, 0, 0),
+(3, 5, 0, 7, 3, 0, 0),
+
+(4, 3, 3, 5, 3, 0, 3),
+(4, 4, 0, 0, 7, 0, 0),
+(4, 4, 0, 3, 6, 3, 0),
+(4, 5, 0, 0, 7, 3, 0)
+    ]
+
 nobles = [
 (0, 0, 3, 3, 3),
 (3, 3, 3, 0, 0),
@@ -100,11 +127,17 @@ nobles = [
 (0, 0, 0, 4, 4)
     ]
 
+class GameState:
+    pass
+
+state = GameState()
+
 # white, blue, green, red, black, yellow
-gemsAvailable = [7, 7, 7, 7, 7, 5]
+state.gemsAvailable = [7, 7, 7, 7, 7, 5]
 
 print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
 print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
+print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
 print ("Noble deck initialized with", len(nobles), "tiles")
 
 numPlayers = 0
