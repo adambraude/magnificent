@@ -2,6 +2,12 @@
 ######   MINI-MAX   ######
 ##########################
 
+# A quick google search brought this up. With this, what we need to make are the nodes that handles
+# the board state for the game.
+
+# For the node to work with this method, it will need a getName method, a getChildren method,
+# and an evaluateBoardState method.
+
 class MiniMax:
     # print utility value of root node (assuming it is max)
     # print names of all nodes visited during search
