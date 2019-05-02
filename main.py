@@ -138,6 +138,9 @@ class GameState:
 
     def setupNewGame(self, decks, ndeck):
         l = len(self.players)+1
+        for i in range(len(self.gemsAvailable)-1):
+            if (l == 3): self.gemsAvailable[i] -= 3
+            if (l == 4): self.gemsAvailable[i] -= 2
         for i in range(l):
             noble = random.choice(ndeck)
             self.nobles.append(noble)
@@ -190,9 +193,9 @@ print ("Noble deck initialized with", len(nobles), "tiles")
 
 numPlayers = 0
 
-while numPlayers < 2 or numPlayers > 5:
-    numPlayers = int(input("How many players? (2-5)"))
-    if (numPlayers < 2 or numPlayers > 5):
+while numPlayers < 2 or numPlayers > 4:
+    numPlayers = int(input("How many players? (2-4)"))
+    if (numPlayers < 2 or numPlayers > 4):
         print("invalid player count:", numPlayers)
 
 class Player:
