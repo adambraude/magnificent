@@ -135,6 +135,15 @@ class GameState:
     gemsAvailable = [7, 7, 7, 7, 7, 5]
     players = []
     turn = 1
+    playerTurn = -1;
+
+    def gameStep(self):
+        self.playerTurn += 1
+        if (self.playerTurn == len(self.players)):
+            self.playerTurn=0
+            self.turn += 1
+        self.printState()
+        print("Player", self.playerTurn+1, "turn:")
 
     def setupNewGame(self, decks, ndeck):
         l = len(self.players)+1
@@ -150,6 +159,15 @@ class GameState:
                 card = random.choice(decks[j])
                 self.cards[j].append(card)
                 decks[j].remove(card)
+
+    def take(self,gems):
+        if sum(gems) > 3 or len(gems) > len(self.gemsAvailable)-1:
+            print("illegal move")
+            return
+        for i in range(len(gems)):
+            self.gemsAvailable[i] -= gems[i]
+            self.players[self.playerTurn].gemsOwned[i] += gems[i]
+        self.gameStep()
 
     def printState(self):
         print("\n--- Turn", self.turn, "---")
@@ -183,7 +201,7 @@ class GameState:
             print(state)
     pass
 
-currentState = GameState()
+cs = GameState()
 
 
 print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
@@ -204,6 +222,9 @@ class Player:
     points = 0
     cardsOwned = [0,0,0,0,0,0]
     id = 0
+
+    def __init__(self, playerFunction):
+        self.playerFunction = playerFunction
 
     def printState(self):
         print("\n--- Player", self.id, "---", self.points, "points")
@@ -228,10 +249,15 @@ class Player:
             print(state)
     pass
 
-for i in range(numPlayers):
-    currentState.players.append(Player())
-    currentState.players[i].id = i
-    currentState.players[i].printState()
+class PlayerFunctions:
+    def human():
+        print("Please enter a command")
 
-currentState.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
-currentState.printState()
+for i in range(numPlayers):
+    cs.players.append(Player(PlayerFunctions.human()))
+    cs.players[i].id = i
+    cs.players[i].printState()
+
+cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
+
+cs.gameStep()
