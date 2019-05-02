@@ -201,10 +201,37 @@ while numPlayers < 2 or numPlayers > 4:
 class Player:
     gemsOwned = [0,0,0,0,0,0]
     reserve = []
+    points = 0
+    cardsOwned = [0,0,0,0,0,0]
+    id = 0
+
+    def printState(self):
+        print("\n--- Player", self.id, "---", self.points, "points")
+        state = "Gems Owned:"
+        for i in range(len(self.gemsOwned)):
+            state += " " + str(self.gemsOwned[i]) + "(+" +str(self.gemsOwned[i] + self.cardsOwned[i]) + ")" + colors[i]
+        print(state)
+        count = 1
+        print("Cards in Reserve: ")
+        for i in range(len(self.reserve)):
+            state = ""
+            for j in range(4):
+                for k in range(len(self.cards[i][j])):
+                    if k == 0:
+                        state += "{" + colors[self.cards[i][j][k]]
+                    elif k == 1:
+                        state += str(self.cards[i][j][k]) + "}:"
+                    elif self.cards[i][j][k] > 0:
+                        state += " " + str(self.cards[i][j][k])+ colors[k-2]
+                state += " [" + str(count) + "]\n"
+                count += 1
+            print(state)
     pass
 
 for i in range(numPlayers):
     currentState.players.append(Player())
+    currentState.players[i].id = i
+    currentState.players[i].printState()
 
 currentState.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
 currentState.printState()
