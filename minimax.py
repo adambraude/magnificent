@@ -2,6 +2,8 @@
 ######   MINI-MAX   ######
 ##########################
 
+#Code based on a minimax algorithm found at https://tonypoer.io/2016/10/28/implementing-minimax-and-alpha-beta-pruning-using-python/
+
 # A quick google search brought this up. With this, what we need to make are the nodes that handles
 # the board state for the game.
 
