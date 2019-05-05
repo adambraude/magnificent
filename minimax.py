@@ -4,31 +4,30 @@
 
 #Code based on a minimax algorithm found at https://tonypoer.io/2016/10/28/implementing-minimax-and-alpha-beta-pruning-using-python/
 
-# A quick google search brought this up. With this, what we need to make are the nodes that handles
-# the board state for the game.
-
-# For the node to work with this method, it will need a getName method, a getChildren method,
-# and an evaluateBoardState method.
+# I'm pushing all of the board evaluating functionality (such as evaluating the board and finding vlaid moves
+# to a as of yet unmade 'boardState' class
+# This is probably equivalent to what the 'game_tree' is
 
 class MiniMax:
-    # print utility value of root node (assuming it is max)
-    # print names of all nodes visited during search
-    def __init__(self, game_tree):
-        self.game_tree = game_tree  # GameTree
-        self.root = game_tree.root  # GameNode
+    def __init__(self, boardState, depth):
+        self.boardState = boardState  # GameTree
         self.currentNode = None     # GameNode
         self.successors = []        # List of GameNodes
+        self.cap = depth            # How big of a search to do
+        self.currentDepth = 0
         return
 
-    def minimax(self, node):
+    # Currently doesn't keep track of both the best node and best value, just the best value. Should
+    # change this probably
+    def minimax(self):
         # first, find the max value
-        best_val = self.max_value(node) # should be root node of tree
+        currentNode = Node(boardState)
+        best_val = self.max_value(currentNode) # should be root node of tree
 
         # second, find the node which HAS that max value
         #  --> means we need to propagate the values back up the
         #      tree as part of our minimax algorithm
-        successors = self.getSuccessors(node)
-        print "MiniMax:  Utility Value of Root Node: = " + str(best_val)
+        successors = self.getSuccessors(currentNode)
         # find the node with our best move
         best_move = None
         for elem in successors:   # ---> Need to propagate values up tree for this to work
@@ -41,10 +40,10 @@ class MiniMax:
 
 
     def max_value(self, node):
-        print "MiniMax-->MAX: Visited Node :: " + node.Name
         if self.isTerminal(node):
             return self.getUtility(node)
 
+        depth += 1
         infinity = float('inf')
         max_value = -infinity
 
@@ -54,7 +53,6 @@ class MiniMax:
         return max_value
 
     def min_value(self, node):
-        print "MiniMax-->MIN: Visited Node :: " + node.Name
         if self.isTerminal(node):
             return self.getUtility(node)
 
@@ -75,11 +73,11 @@ class MiniMax:
         assert node is not None
         return node.children
 
-    # return true if the node has NO children (successor states)
+    # return true if the node has NO children (successor states) OR we reach the maximum depth
     # return false if the node has children (successor states)
     def isTerminal(self, node):
         assert node is not None
-        return len(node.children) == 0
+        return ((len(node.children) == 0) or (depth > cap))
 
     def getUtility(self, node):
         assert node is not None
