@@ -188,10 +188,30 @@ class GameState:
                 new.players[self.playerTurn].gemsOwned[i] += 2
                 new.name = "take 2" + colors[i]
                 self.childrenL.append(new)
+        for i in range(len(self.gemsAvailable)-3):
+            for j in range(i+1, len(self.gemsAvailable)-2):
+                for k in range(i+j+1, len(self.gemsAvailable)-1):
+                    if self.gemsAvailable[i] >= 1 or self.gemsAvailable[j] >= 1 or self.gemsAvailable[k] >= 1:
+                        new = self.copyMe()
+                        new.name = "take "
+                        if self.gemsAvailable[i]:
+                            new.gemsAvailable[i] -= 1
+                            new.players[self.playerTurn].gemsOwned[i] += 1
+                            new.name += colors[i]
+                        if self.gemsAvailable[j]:
+                            new.gemsAvailable[j] -= 1
+                            new.players[self.playerTurn].gemsOwned[j] += 1
+                            new.name += colors[j]
+                        if self.gemsAvailable[k]:
+                            new.gemsAvailable[k] -= 1
+                            new.players[self.playerTurn].gemsOwned[k] += 1
+                            new.name += colors[k]
+                        self.childrenL.append(new)
         return self.childrenL
 
     def copyMe(self):
         out = copy.deepcopy(self)
+        out.childrenL = []
         out.playerTurn += 1
         if (out.playerTurn == len(out.players)):
             out.playerTurn=0
@@ -284,6 +304,7 @@ class PlayerFunctions:
     def ai_random(boardState):
         if len(boardState.children()):
             out = random.choice(boardState.children())
+            print(out.name)
             cs.makeMove(out)
         else: print("Error: no legal moves")
 
