@@ -1,4 +1,5 @@
 import random
+import copy
 print ("Hello, and welcome to Splandor!")
 
 colors = "W", "U", "G", "R", "B", "Y"
@@ -129,21 +130,22 @@ nobles = [
     ]
 
 class GameState:
-    nobles = []
-    cards = [[],[],[]]
-    # white, blue, green, red, black, yellow
-    gemsAvailable = [7, 7, 7, 7, 7, 5]
-    players = []
-    turn = 1
-    playerTurn = -1;
+    
+    def __init__(self):
+        self.nobles = []
+        self.cards = [[],[],[]]
+        # white, blue, green, red, black, yellow
+        self.gemsAvailable = [7, 7, 7, 7, 7, 5]
+        self.players = []
+        self.turn = 1
+        self.playerTurn = 0
+        self.childrenL = []
+        self.name = "start of game"
 
     def gameStep(self):
-        self.playerTurn += 1
-        if (self.playerTurn == len(self.players)):
-            self.playerTurn=0
-            self.turn += 1
         self.printState()
         print("Player", self.playerTurn+1, "turn:")
+        self.players[self.playerTurn].playerFunction(self)
 
     def setupNewGame(self, decks, ndeck):
         l = len(self.players)+1
@@ -159,6 +161,10 @@ class GameState:
                 card = random.choice(decks[j])
                 self.cards[j].append(card)
                 decks[j].remove(card)
+        self.printState()
+        print("Player", self.playerTurn+1, "turn:")
+        self.players[self.playerTurn].playerFunction(self)
+        self.children()
 
     def take(self,gems):
         if sum(gems) > 3 or len(gems) > len(self.gemsAvailable)-1:
@@ -168,6 +174,29 @@ class GameState:
             self.gemsAvailable[i] -= gems[i]
             self.players[self.playerTurn].gemsOwned[i] += gems[i]
         self.gameStep()
+
+    def makeMove(self, move):
+        cs = move
+        cs.gameStep()
+
+    def children(self):
+        if (len(self.childrenL) > 0): return self.childrenL
+        for i in range(len(self.gemsAvailable)-1):
+            if self.gemsAvailable[i] >= 4:
+                new = self.copyMe()
+                new.gemsAvailable[i] -= 2
+                new.players[self.playerTurn].gemsOwned[i] += 2
+                new.name = "take 2" + colors[i]
+                self.childrenL.append(new)
+        return self.childrenL
+
+    def copyMe(self):
+        out = copy.deepcopy(self)
+        out.playerTurn += 1
+        if (out.playerTurn == len(out.players)):
+            out.playerTurn=0
+            out.turn += 1
+        return out
 
     def printState(self):
         print("\n--- Turn", self.turn, "---")
@@ -199,10 +228,11 @@ class GameState:
                 state += " [" + str(count) + "]\n"
                 count += 1
             print(state)
+        for i in range(len(self.players)):
+            self.players[i].printState()
     pass
 
 cs = GameState()
-
 
 print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
 print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
@@ -217,20 +247,19 @@ while numPlayers < 2 or numPlayers > 4:
         print("invalid player count:", numPlayers)
 
 class Player:
-    gemsOwned = [0,0,0,0,0,0]
-    reserve = []
-    points = 0
-    cardsOwned = [0,0,0,0,0,0]
-    id = 0
-
     def __init__(self, playerFunction):
         self.playerFunction = playerFunction
+        self.gemsOwned = [0,0,0,0,0,0]
+        self.reserve = []
+        self.points = 0
+        self.cardsOwned = [0,0,0,0,0,0]
+        self.id = 0
 
     def printState(self):
-        print("\n--- Player", self.id, "---", self.points, "points")
+        print("\n--- Player", self.id+1, "---", self.points, "points")
         state = "Gems Owned:"
         for i in range(len(self.gemsOwned)):
-            state += " " + str(self.gemsOwned[i]) + "(+" +str(self.gemsOwned[i] + self.cardsOwned[i]) + ")" + colors[i]
+            state += " " + str(self.gemsOwned[i]) + "(+" +str(self.cardsOwned[i]) + ")" + colors[i]
         print(state)
         count = 1
         print("Cards in Reserve: ")
@@ -250,14 +279,16 @@ class Player:
     pass
 
 class PlayerFunctions:
-    def human():
+    def human(boardState):
         print("Please enter a command")
+    def ai_random(boardState):
+        if len(boardState.children()):
+            out = random.choice(boardState.children())
+            cs.makeMove(out)
+        else: print("Error: no legal moves")
 
 for i in range(numPlayers):
-    cs.players.append(Player(PlayerFunctions.human()))
+    cs.players.append(Player(PlayerFunctions.ai_random))
     cs.players[i].id = i
-    cs.players[i].printState()
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
-
-cs.gameStep()
