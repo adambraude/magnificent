@@ -76,18 +76,18 @@ tier2Deck = [
 (0, 2, 0, 0, 0, 5, 0),
 (0, 3, 6, 0, 0, 0, 0),
 
-(2, 1, 3, 0, 2, 2, 1),
+(2, 1, 3, 0, 2, 3, 0),
 (2, 1, 2, 3, 0, 0, 2),
-(2, 2, 4, 2, 0, 0, 2),
-(2, 2, 0, 5, 3, 3, 0),
-(2, 2, 0, 0, 5, 5, 0),
-(2, 3, 0, 0, 6, 6, 0),
+(2, 2, 4, 2, 0, 0, 1),
+(2, 2, 0, 5, 3, 0, 0),
+(2, 2, 0, 0, 5, 0, 0),
+(2, 3, 0, 0, 6, 0, 0),
 
 (3, 1, 2, 0, 0, 2, 1),
 (3, 1, 0, 3, 0, 2, 1),
 (3, 2, 1, 4, 2, 0, 2),
 (3, 2, 3, 0, 0, 0, 3),
-(3, 2, 0, 0, 0, 0, 0),
+(3, 2, 0, 0, 0, 0, 5),
 (3, 3, 0, 0, 0, 6, 0)
     ]
 
@@ -168,7 +168,7 @@ class GameState:
                 return
         
         if (verbose): print("Player", self.playerTurn+1, "turn:")
-        self.players[self.playerTurn].playerFunction(self)
+        return self.players[self.playerTurn].playerFunction(self)
 
     def setupNewGame(self, decks, ndeck):
         l = len(self.players)+1
@@ -195,6 +195,7 @@ class GameState:
             while (len(self.cards[j]) < 4):
                 card = random.choice(self.decks[j])
                 self.cards[j].append(card)
+                self.decks[j].remove(card)
 
     def take(self,gems):
         if sum(gems) > 3 or len(gems) > len(self.gemsAvailable)-1:
@@ -206,8 +207,7 @@ class GameState:
         self.gameStep()
 
     def makeMove(self, move):
-        cs = move
-        cs.gameStep()
+        self = move
 
     def children(self):
         if (len(self.childrenL) > 0): return self.childrenL
@@ -275,11 +275,13 @@ class GameState:
         for k in range(len(state.gemsAvailable)-1):
             kcost = card[k+2] - p.cardsOwned[k]
             if kcost < 0: kcost = 0
+            state.gemsAvailable[k] += min(kcost, p.gemsOwned[k])
             p.gemsOwned[k] -= kcost
             if p.gemsOwned[k] < 0:
                 wild += p.gemsOwned[k]
                 p.gemsOwned[k] = 0
         p.gemsOwned[len(state.gemsAvailable)-1] += wild
+        state.gemsAvailable[len(state.gemsAvailable)-1] += -wild
         p.cardsOwned[card[0]] += 1
         p.points += card[1]
 
@@ -388,11 +390,17 @@ class PlayerFunctions:
         if len(boardState.children()):
             out = random.choice(boardState.children())
             if (verbose): print(out.name)
-            cs.makeMove(out)
-        else: print("Error: no legal moves")
+            return out
+        else:
+            print("Error: no legal moves")
+            return cs
 
 for i in range(numPlayers):
     cs.players.append(Player(PlayerFunctions.ai_random))
     cs.players[i].id = i
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
+
+while cs != None:
+    print(cs)
+    cs = cs.gameStep()
