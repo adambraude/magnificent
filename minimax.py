@@ -71,14 +71,14 @@ class MiniMax:
     # successor states in a game tree are the child nodes...
     def getSuccessors(self, node):
         assert node is not None
-        return node.children
+        return node.children()
 
     # return true if the node has NO children (successor states) OR we reach the maximum depth
     # return false if the node has children (successor states)
     def isTerminal(self, node):
         assert node is not None
-        return ((len(node.children) == 0) or (depth > cap))
+        return ((len(node.children()) == 0) or (depth > cap))
 
     def getUtility(self, node):
         assert node is not None
-        return node.value
+        return node.value()

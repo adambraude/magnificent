@@ -1,5 +1,7 @@
 import random
 import copy
+import minimax
+
 print ("Hello, and welcome to Splandor!")
 
 verbose = 1
@@ -144,6 +146,7 @@ class GameState:
         self.childrenL = []
         self.name = "start of game"
 
+    #advance the game by one step and return the new state
     def gameStep(self):
         self.restockCards()
         if (verbose): self.printState()
@@ -159,17 +162,18 @@ class GameState:
                     numPlayers = 0
                 if (pts == highestScore):
                     numPlayers += 1
-                    
             if highestScore >= 15:
                 if numPlayers == 1:
                     print("The winner is Player", numPlayer+1, "with", highestScore, "points")
                 else:
+                    #there's an actual rule for this that I need to write
                     print("TIE")
                 return
         
         if (verbose): print("Player", self.playerTurn+1, "turn:")
         return self.players[self.playerTurn].playerFunction(self)
 
+    #run this on the very first GameState
     def setupNewGame(self, decks, ndeck):
         l = len(self.players)+1
         for i in range(len(self.gemsAvailable)-1):
@@ -190,6 +194,7 @@ class GameState:
         self.players[self.playerTurn].playerFunction(self)
         self.children()
 
+    #refills any open card slots
     def restockCards(self):
         for j in range(len(self.cards)):
             while (len(self.cards[j]) < 4):
@@ -197,20 +202,11 @@ class GameState:
                 self.cards[j].append(card)
                 self.decks[j].remove(card)
 
-    def take(self,gems):
-        if sum(gems) > 3 or len(gems) > len(self.gemsAvailable)-1:
-            print("illegal move")
-            return
-        for i in range(len(gems)):
-            self.gemsAvailable[i] -= gems[i]
-            self.players[self.playerTurn].gemsOwned[i] += gems[i]
-        self.gameStep()
-
-    def makeMove(self, move):
-        self = move
-
+    #get all children of this node
     def children(self):
+        #if children have already been generated, don't regenerate them
         if (len(self.childrenL) > 0): return self.childrenL
+        #take 2
         for i in range(len(self.gemsAvailable)-1):
             if self.gemsAvailable[i] >= 4:
                 new = self.copyMe()
@@ -218,6 +214,7 @@ class GameState:
                 new.players[self.playerTurn].gemsOwned[i] += 2
                 new.name = "take 2" + colors[i]
                 self.childrenL.append(new)
+        #take 1 from up to 3 different places
         for i in range(len(self.gemsAvailable)-3):
             for j in range(i+1, len(self.gemsAvailable)-2):
                 for k in range(i+j+1, len(self.gemsAvailable)-1):
@@ -237,6 +234,7 @@ class GameState:
                             new.players[self.playerTurn].gemsOwned[k] += 1
                             new.name += colors[k]
                         self.childrenL.append(new)
+        #buy card
         for i in range(len(self.cards)):
             for j in range(len(self.cards[i])):
                 card = self.cards[i][j]
@@ -247,6 +245,7 @@ class GameState:
                     new.name = "buy " + str(i*4+j)
                     self.childrenL.append(new)
         r = self.players[self.playerTurn].reserve
+        #buy card from reserve
         for i in range(len(r)):
             if (self.canAfford(r[i])):
                 new = self.copyMe()
@@ -254,6 +253,7 @@ class GameState:
                 new.players[self.playerTurn].reserve.remove(r[i])
                 new.name = "buy reserve" + str(i)
                 self.childrenL.append(new)
+        #reserve a card
         if len(r) < 3:
             for i in range(len(self.cards)):
                 for j in range(len(self.cards[i])):
@@ -269,6 +269,7 @@ class GameState:
             
         return self.childrenL
 
+    #purchase a card
     def buyCard(self, state, card):
         wild = 0
         p = state.players[self.playerTurn]
@@ -285,6 +286,7 @@ class GameState:
         p.cardsOwned[card[0]] += 1
         p.points += card[1]
 
+    #check if a card is affordable
     def canAfford(self, card):
         wild = 0
         p = self.players[self.playerTurn]
@@ -297,6 +299,18 @@ class GameState:
             return 1
         return 0
 
+    #return a heuristic value ~ this should be replaced with a collection
+    #of heuristic functions that can be plugged in to minimax
+    def value(self):
+        pt = self.playerTurn -1
+        if pt < 0: pt += len(self.players)
+        p = self.players[pt]
+        val = p.points*3
+        val += sum(p.cardsOwned)
+        val += sum(p.gemsOwned)
+        return val
+
+    #creates a copy of the state and advances it to the next turn
     def copyMe(self):
         out = copy.deepcopy(self)
         out.childrenL = []
@@ -306,6 +320,7 @@ class GameState:
             out.turn += 1
         return out
 
+    #prints a representation of the current state
     def printState(self):
         print("\n--- Turn", self.turn, "---")
         state = "Gems Available:"
