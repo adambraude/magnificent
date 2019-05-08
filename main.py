@@ -2,6 +2,8 @@ import random
 import copy
 print ("Hello, and welcome to Splandor!")
 
+verbose = 1
+
 colors = "W", "U", "G", "R", "B", "Y"
 
 # color, points, white, blue, green, red, black
@@ -143,8 +145,29 @@ class GameState:
         self.name = "start of game"
 
     def gameStep(self):
-        self.printState()
-        print("Player", self.playerTurn+1, "turn:")
+        self.restockCards()
+        if (verbose): self.printState()
+        if (self.playerTurn == 0):
+            highestScore = 0
+            numPlayers = 0
+            numPlayer = 0
+            for i in range(len(self.players)):
+                pts = self.players[i].points
+                if (pts > highestScore):
+                    highestScore = pts
+                    numPlayer = i
+                    numPlayers = 0
+                if (pts == highestScore):
+                    numPlayers += 1
+                    
+            if highestScore >= 15:
+                if numPlayers == 1:
+                    print("The winner is Player", numPlayer+1, "with", highestScore, "points")
+                else:
+                    print("TIE")
+                return
+        
+        if (verbose): print("Player", self.playerTurn+1, "turn:")
         self.players[self.playerTurn].playerFunction(self)
 
     def setupNewGame(self, decks, ndeck):
@@ -161,10 +184,17 @@ class GameState:
                 card = random.choice(decks[j])
                 self.cards[j].append(card)
                 decks[j].remove(card)
+        self.decks = decks
         self.printState()
         print("Player", self.playerTurn+1, "turn:")
         self.players[self.playerTurn].playerFunction(self)
         self.children()
+
+    def restockCards(self):
+        for j in range(len(self.cards)):
+            while (len(self.cards[j]) < 4):
+                card = random.choice(self.decks[j])
+                self.cards[j].append(card)
 
     def take(self,gems):
         if sum(gems) > 3 or len(gems) > len(self.gemsAvailable)-1:
@@ -207,7 +237,63 @@ class GameState:
                             new.players[self.playerTurn].gemsOwned[k] += 1
                             new.name += colors[k]
                         self.childrenL.append(new)
+        for i in range(len(self.cards)):
+            for j in range(len(self.cards[i])):
+                card = self.cards[i][j]
+                if (self.canAfford(card)):
+                    new = self.copyMe()
+                    self.buyCard(new, card)
+                    new.cards[i].remove(card)
+                    new.name = "buy " + str(i*4+j)
+                    self.childrenL.append(new)
+        r = self.players[self.playerTurn].reserve
+        for i in range(len(r)):
+            if (self.canAfford(r[i])):
+                new = self.copyMe()
+                self.buyCard(new, r[i])
+                new.players[self.playerTurn].reserve.remove(r[i])
+                new.name = "buy reserve" + str(i)
+                self.childrenL.append(new)
+        if len(r) < 3:
+            for i in range(len(self.cards)):
+                for j in range(len(self.cards[i])):
+                    card = self.cards[i][j]
+                    new = self.copyMe()
+                    new.cards[i].remove(card)
+                    p = new.players[self.playerTurn]
+                    if new.gemsAvailable[len(self.gemsAvailable)-1]:
+                        p.gemsOwned[len(self.gemsAvailable)-1] += 1
+                        new.gemsAvailable[len(self.gemsAvailable)-1] -= 1
+                    p.reserve.append(card)
+                    self.childrenL.append(new)
+            
         return self.childrenL
+
+    def buyCard(self, state, card):
+        wild = 0
+        p = state.players[self.playerTurn]
+        for k in range(len(state.gemsAvailable)-1):
+            kcost = card[k+2] - p.cardsOwned[k]
+            if kcost < 0: kcost = 0
+            p.gemsOwned[k] -= kcost
+            if p.gemsOwned[k] < 0:
+                wild += p.gemsOwned[k]
+                p.gemsOwned[k] = 0
+        p.gemsOwned[len(state.gemsAvailable)-1] += wild
+        p.cardsOwned[card[0]] += 1
+        p.points += card[1]
+
+    def canAfford(self, card):
+        wild = 0
+        p = self.players[self.playerTurn]
+        for k in range(len(self.gemsAvailable)-1):
+            kcost = card[k+2] - p.cardsOwned[k]
+            if kcost < 0: kcost = 0
+            if p.gemsOwned[k] - kcost < 0:
+                wild += p.gemsOwned[k] - kcost
+        if p.gemsOwned[len(self.gemsAvailable)-1] >= -wild:
+            return 1
+        return 0
 
     def copyMe(self):
         out = copy.deepcopy(self)
@@ -237,7 +323,7 @@ class GameState:
         print("Cards: ")
         for i in range(len(self.cards)):
             state = ""
-            for j in range(4):
+            for j in range(len(self.cards[i])):
                 for k in range(len(self.cards[i][j])):
                     if k == 0:
                         state += "{" + colors[self.cards[i][j][k]]
@@ -285,16 +371,13 @@ class Player:
         print("Cards in Reserve: ")
         for i in range(len(self.reserve)):
             state = ""
-            for j in range(4):
-                for k in range(len(self.cards[i][j])):
-                    if k == 0:
-                        state += "{" + colors[self.cards[i][j][k]]
-                    elif k == 1:
-                        state += str(self.cards[i][j][k]) + "}:"
-                    elif self.cards[i][j][k] > 0:
-                        state += " " + str(self.cards[i][j][k])+ colors[k-2]
-                state += " [" + str(count) + "]\n"
-                count += 1
+            for k in range(len(self.reserve[i])):
+                if k == 0:
+                    state += "{" + colors[self.reserve[i][k]]
+                elif k == 1:
+                    state += str(self.reserve[i][k]) + "}:"
+                elif self.reserve[i][k] > 0:
+                    state += " " + str(self.reserve[i][k])+ colors[k-2]
             print(state)
     pass
 
@@ -304,7 +387,7 @@ class PlayerFunctions:
     def ai_random(boardState):
         if len(boardState.children()):
             out = random.choice(boardState.children())
-            print(out.name)
+            if (verbose): print(out.name)
             cs.makeMove(out)
         else: print("Error: no legal moves")
 
