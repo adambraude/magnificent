@@ -166,8 +166,20 @@ class GameState:
                 if numPlayers == 1:
                     print("The winner is Player", numPlayer+1, "with", highestScore, "points")
                 else:
-                    #there's an actual rule for this that I need to write
-                    print("TIE")
+                    #In ties, the player with the fewest development cards wins
+                    #This is a fairly clunky way to do it, but should work
+                    winningPlayer = 0
+                    fewestCards = len(tier1Deck)+len(tier2Deck)+len(tier3Deck)+1
+                    for j in range(len(self.players)):
+                        currentPlayer = self.players[i]
+                        if (highestScore == currentPlayer.points:
+                            playerCards = sum(currentPlayer.cardsOwned)
+                            if (playerCards < fewestCards):
+                            fewestCards = playerCards
+                            winningPlayer = i
+                    print("There was a tie in points, so the winner is the player with the most points"
+                          "and the fewest amount of development cards. The winner is Player", winningPlayer+1,
+                          "with a score of", highestScore, "and", fewestCards ,"cards.") 
                 return
         
         if (verbose): print("Player", self.playerTurn+1, "turn:")
