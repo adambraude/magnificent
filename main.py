@@ -309,7 +309,24 @@ class GameState:
         val += sum(p.cardsOwned)
         val += sum(p.gemsOwned)
         return val
-
+    
+    #The heuristic from the thesis.
+    #This heuristic also uses a function of .9^NumTurns in the future this is from.
+    #The exponential decay is to help evaluate the uncertainty of the board state in
+    # the future.
+    #Commenting out the noble section until nobles are implemented
+    def allEval2(self, player, numTurns):
+        winlose = 100*player.wonloss    #this should be a player held variable,
+                                        #1 if the player won, -1 if they lost,
+                                        #0 otherwise
+        score = 1.5*player.points
+        #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
+        prestige = sum(player.cardsOwned)
+        gems = sum(player.gemsOwned)
+        val = winlose + score + prestige + gems #+ nobles
+        expDecay = .9^numTurns
+        return val*expDecay
+    
     #creates a copy of the state and advances it to the next turn
     def copyMe(self):
         out = copy.deepcopy(self)
