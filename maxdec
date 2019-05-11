@@ -43,7 +43,7 @@ class MaxDec:
     #returns a 2 element list, first elem is score, second is the parent node
     def multi_max(self, node, playerNum):
         if self.isTerminal(node):
-            return [self.getUtility, node]
+            return [self.getUtility(node, self.currentDepth), node]
 
         self.currentDepth += 1
         currentPlayer = self.players[playerNum]
@@ -84,4 +84,4 @@ class MaxDec:
     #Will need to spit out a vector that has value for each player
     def getUtility(self, node, numTurns, player):
         assert node is not None
-        return evalFunc(numTurns, node)
+        return self.evalFunc(numTurns, node)
