@@ -145,6 +145,7 @@ class GameState:
         self.playerTurn = 0
         self.childrenL = []
         self.name = "start of game"
+        self.playerid = -1
 
     #advance the game by one step and return the new state
     def gameStep(self):
@@ -443,11 +444,12 @@ class PlayerFunctions:
             return cs
      
     #Needs id to work correctly
-    def md(boardstate):
-        ai = MaxDec(boardstate, 0, 2, myid, allEval2)
+    def md(boardState):
+        ai = MaxDec.MaxDec(boardState, 0, boardState.players, boardState.playerid, boardState.allEval2)
         return ai.maxdec
 
 for i in range(numPlayers):
+    cs.playerid = i
     cs.players.append(Player(PlayerFunctions.ai_random))
     cs.players[i].id = i
 
