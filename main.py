@@ -172,14 +172,12 @@ class GameState:
                     fewestCards = len(tier1Deck)+len(tier2Deck)+len(tier3Deck)+1
                     for j in range(len(self.players)):
                         currentPlayer = self.players[i]
-                        if (highestScore == currentPlayer.points:
+                        if (highestScore == currentPlayer.points):
                             playerCards = sum(currentPlayer.cardsOwned)
                             if (playerCards < fewestCards):
-                            fewestCards = playerCards
-                            winningPlayer = i
-                    print("There was a tie in points, so the winner is the player with the most points"
-                          "and the fewest amount of development cards. The winner is Player", winningPlayer+1,
-                          "with a score of", highestScore, "and", fewestCards ,"cards.") 
+                                fewestCards = playerCards
+                                winningPlayer = i
+                    print("The winner is Player", winningPlayer+1, "with a score of", highestScore, "points")
                 return
         
         if (verbose): print("Player", self.playerTurn+1, "turn:")
@@ -327,17 +325,22 @@ class GameState:
     #The exponential decay is to help evaluate the uncertainty of the board state in
     # the future.
     #Commenting out the noble section until nobles are implemented
-    def allEval2(self, player, numTurns):
-        winlose = 100*player.wonloss    #this should be a player held variable,
+    def allEval2(self, numTurns, node):
+        utilVec = [0]*4
+        counter = 0
+        currentBoard = node.boardState
+        for player in currentBoard.players:
+            #winlose = 100*player.wonloss    #this should be a player held variable,
                                         #1 if the player won, -1 if they lost,
                                         #0 otherwise
-        score = 1.5*player.points
-        #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
-        prestige = sum(player.cardsOwned)
-        gems = sum(player.gemsOwned)
-        val = winlose + score + prestige + gems #+ nobles
-        expDecay = .9^numTurns
-        return val*expDecay
+            score = 1.5*player.points
+            #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
+            prestige = sum(player.cardsOwned)
+            gems = sum(player.gemsOwned)
+            val = winlose + score + prestige + gems #+ nobles
+            expDecay = .9^numTurns
+            utilVec[counter] = val*expDecay
+        return utilVec
     
     #creates a copy of the state and advances it to the next turn
     def copyMe(self):
@@ -438,6 +441,11 @@ class PlayerFunctions:
         else:
             print("Error: no legal moves")
             return cs
+     
+    #Needs id to work correctly
+    def md(boardstate):
+        ai = MaxDec(boardstate, 0, 2, myid, allEval2)
+        return ai.maxdec
 
 for i in range(numPlayers):
     cs.players.append(Player(PlayerFunctions.ai_random))
