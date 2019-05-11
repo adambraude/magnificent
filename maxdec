@@ -28,7 +28,7 @@ class MaxDec:
 
     # returns the node of the best move
     def maxdec(self):
-        currentPlayer = self.players[startingPlayer]
+        currentPlayer = self.players[self.startingPlayer]
         # first, find the max value
         self.currentNode = self.boardState
         best_moves = self.multi_max(self.currentNode, self.startingPlayer)
