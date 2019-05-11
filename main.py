@@ -450,7 +450,7 @@ class PlayerFunctions:
 
 for i in range(numPlayers):
     cs.playerid = i
-    cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.md))
     cs.players[i].id = i
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
