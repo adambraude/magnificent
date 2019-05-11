@@ -447,7 +447,7 @@ class PlayerFunctions:
     #Needs id to work correctly
     def md(boardState):
         ai = MaxDec(boardState, 0, boardState.players, boardState.playerid, boardState.allEval2)
-        return ai.maxdec
+        return ai.maxdec()
 
 for i in range(numPlayers):
     cs.playerid = i
