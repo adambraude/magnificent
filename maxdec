@@ -80,6 +80,6 @@ class MaxDec:
         return (len(node.children()) == 0 or (self.currentDepth > self.cap))
 
     #Will need to spit out a vector that has value for each player
-    def getUtility(self, node, numTurns, player):
+    def getUtility(self, node, numTurns):
         assert node is not None
         return self.evalFunc(numTurns, node)
