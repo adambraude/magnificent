@@ -33,8 +33,9 @@ class MaxDec:
         currentNode = Node(boardState)
         best_moves = self.multi_max(currentNode, startingPlayer)
 
+        bestBoard = best_moves[1].boardState
         # return that best value that we've found
-        return best_moves[1]
+        return bestBoard
 
     # returns a value matrix for a move
     # should probably be tweaked to grab the best value for the CURRENT player
@@ -51,6 +52,8 @@ class MaxDec:
         infinity = float('inf')
         currentBest = -infinity
         bestValues = []
+        counter = 0
+        bestNode = []
         
         for state in next_nodes:
             nextPlayerNum = (playerNum + 1) % len(self.players)
@@ -60,8 +63,9 @@ class MaxDec:
             if max_value > currentBest:
                 currentBest = max_value
                 bestValues = valvec
+                bestNode = state
 
-        return [valvec, node]
+        return [valvec, bestNode]
 
     #                     #
     #   UTILITY METHODS   #
