@@ -1,4 +1,4 @@
-import node
+from node import *
 
 ##########################
 ######   MaxDec     ######
@@ -28,12 +28,12 @@ class MaxDec:
 
     # returns the node of the best move
     def maxdec(self):
-        currentPlayer = players[startingPlayer]
+        currentPlayer = self.players[startingPlayer]
         # first, find the max value
-        currentNode = Node(boardState)
-        best_moves = self.multi_max(currentNode, startingPlayer)
+        self.currentNode = self.boardState
+        best_moves = self.multi_max(self.currentNode, self.startingPlayer)
 
-        bestBoard = best_moves[1].boardState
+        bestBoard = best_moves[1]
         # return that best value that we've found
         return bestBoard
 
@@ -41,19 +41,18 @@ class MaxDec:
     # should probably be tweaked to grab the best value for the CURRENT player
 
     #returns a 2 element list, first elem is score, second is the parent node
-    def multi_max(self, node, playerNum, ):
+    def multi_max(self, node, playerNum):
         if self.isTerminal(node):
             return [self.getUtility, node]
 
         depth += 1
         currentPlayer = self.players[playerNum]
-        next_nodes = self.boardState.children
+        next_nodes = self.boardState.children()
 
         infinity = float('inf')
         currentBest = -infinity
         bestValues = []
-        counter = 0
-        bestNode = []
+        bestNode = None
         
         for state in next_nodes:
             nextPlayerNum = (playerNum + 1) % len(self.players)
@@ -65,7 +64,7 @@ class MaxDec:
                 bestValues = valvec
                 bestNode = state
 
-        return [valvec, bestNode]
+        return [bestValues, bestNode]
 
     #                     #
     #   UTILITY METHODS   #
@@ -74,13 +73,13 @@ class MaxDec:
     # successor states in a game tree are the child nodes...
     def getSuccessors(self, node):
         assert node is not None
-        return node.children
+        return node.children()
 
     # return true if the node has NO children (successor states) OR we reach the maximum depth
     # return false if the node has children (successor states)
     def isTerminal(self, node):
         assert node is not None
-        return ((len(node.children)) == 0 or (depth > cap))
+        return (len(node.children()) == 0 or (self.currentDepth > self.cap))
 
     #Will need to spit out a vector that has value for each player
     def getUtility(self, node, numTurns, player):
