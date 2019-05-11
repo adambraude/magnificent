@@ -328,9 +328,8 @@ class GameState:
     # the future.
     #Commenting out the noble section until nobles are implemented
     def allEval2(self, numTurns, node):
-        utilVec = [0]*4
+        utilVec = [0]*(len(node.players))
         counter = 0
-        currentBoard = node.boardState
         for player in currentBoard.players:
             #winlose = 100*player.wonloss    #this should be a player held variable,
                                         #1 if the player won, -1 if they lost,
@@ -339,8 +338,8 @@ class GameState:
             #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
             prestige = sum(player.cardsOwned)
             gems = sum(player.gemsOwned)
-            val = winlose + score + prestige + gems #+ nobles
-            expDecay = .9^numTurns
+            val = score + prestige + gems #+ nobles + winlose
+            expDecay = .9**numTurns
             utilVec[counter] = val*expDecay
         return utilVec
     
