@@ -1,5 +1,5 @@
 # Node values are created when it is initialized
-class Node
+class Node:
     #assuming that we have a class 'boardstate', I am pushing all methods for
     #analyzing the board (possible moves and such) onto that class
     def __init__(self, boardState):
