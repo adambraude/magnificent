@@ -1,6 +1,7 @@
 import random
 import copy
 import minimax
+from MaxDec import *
 
 print ("Hello, and welcome to Splandor!")
 
@@ -445,7 +446,7 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        ai = MaxDec.MaxDec(boardState, 0, boardState.players, boardState.playerid, boardState.allEval2)
+        ai = MaxDec(boardState, 0, boardState.players, boardState.playerid, boardState.allEval2)
         return ai.maxdec
 
 for i in range(numPlayers):
