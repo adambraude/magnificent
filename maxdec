@@ -45,7 +45,7 @@ class MaxDec:
         if self.isTerminal(node):
             return [self.getUtility, node]
 
-        depth += 1
+        self.currentDepth += 1
         currentPlayer = self.players[playerNum]
         next_nodes = self.boardState.children()
 
