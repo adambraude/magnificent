@@ -4,6 +4,8 @@ class Node
     #analyzing the board (possible moves and such) onto that class
     def __init__(self, boardState):
         self.boardState = boardState     #The current boardstate is the node
-        self.children = boardState.moves #List of possible boardstates that are 1 move away
-        self.value = boardState.evaluate #The value of the current boardstate
+        self.children = boardState.children() #List of possible boardstates that are 1 move away
         return
+        
+    def getChildren(self):
+        return self.children
