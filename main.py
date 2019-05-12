@@ -161,10 +161,9 @@ class GameState:
         win = self.checkWinner()
         if (win != -1):
             print("The winner is Player", win+1, "with a score of", self.players[win].points, "points")
-            Rwinner = win
-            return
+            return (None, win)
         if (verbose): print("Player", self.playerTurn+1, "turn:")
-        return self.players[self.playerTurn].playerFunction(self)
+        return (self.players[self.playerTurn].playerFunction(self), -1)
 
     def checkWinner(self):
         if (self.playerTurn == 0):
@@ -231,18 +230,27 @@ class GameState:
     def children(self):
         #if children have already been generated, don't regenerate them
         if (len(self.childrenL) > 0): return self.childrenL
-        #take 2
-        for i in range(len(self.gemsAvailable)-1):
-            if self.gemsAvailable[i] >= 4:
-                new = self.copyMe()
-                new.gemsAvailable[i] -= 2
-                new.players[self.playerTurn].gemsOwned[i] += 2
-                new.name = "take 2" + colors[i]
-                if (sum(new.players[self.playerTurn].gemsOwned) > 10):
-                    #self.childrenL.extend(self.discardGems([new], 0))
-                    pass
-                else:
+        #buy card
+        for i in range(len(self.cards)):
+            for j in range(len(self.cards[i])):
+                card = self.cards[i][j]
+                if (self.canAfford(card)):
+                    new = self.copyMe()
+                    self.buyCard(new, card)
+                    new.cards[i].remove(card)
+                    new.name = "buy " + str(i*4+j+1)
+                    self.takeNobles(new)
                     self.childrenL.append(new)
+        r = self.players[self.playerTurn].reserve
+        #buy card from reserve
+        for i in range(len(r)):
+            if (self.canAfford(r[i])):
+                new = self.copyMe()
+                self.buyCard(new, r[i])
+                new.players[self.playerTurn].reserve.remove(r[i])
+                new.name = "buy reserve " + str(i+1)
+                self.takeNobles(new)
+                self.childrenL.append(new)
         #take 1 from up to 3 different places
         for i in range(len(self.gemsAvailable)-1):
             for j in range(i+1, len(self.gemsAvailable)-1):
@@ -267,27 +275,18 @@ class GameState:
                             pass
                         else:
                             self.childrenL.append(new)
-        #buy card
-        for i in range(len(self.cards)):
-            for j in range(len(self.cards[i])):
-                card = self.cards[i][j]
-                if (self.canAfford(card)):
-                    new = self.copyMe()
-                    self.buyCard(new, card)
-                    new.cards[i].remove(card)
-                    new.name = "buy " + str(i*4+j+1)
-                    self.takeNobles(new)
-                    self.childrenL.append(new)
-        r = self.players[self.playerTurn].reserve
-        #buy card from reserve
-        for i in range(len(r)):
-            if (self.canAfford(r[i])):
+        #take 2
+        for i in range(len(self.gemsAvailable)-1):
+            if self.gemsAvailable[i] >= 4:
                 new = self.copyMe()
-                self.buyCard(new, r[i])
-                new.players[self.playerTurn].reserve.remove(r[i])
-                new.name = "buy reserve " + str(i+1)
-                self.takeNobles(new)
-                self.childrenL.append(new)
+                new.gemsAvailable[i] -= 2
+                new.players[self.playerTurn].gemsOwned[i] += 2
+                new.name = "take 2" + colors[i]
+                if (sum(new.players[self.playerTurn].gemsOwned) > 10):
+                    #self.childrenL.extend(self.discardGems([new], 0))
+                    pass
+                else:
+                    self.childrenL.append(new)
         #reserve a card
         if len(r) < 3:
             for i in range(len(self.cards)):
@@ -331,6 +330,8 @@ class GameState:
                     newStates.append(newState)
                 out.extend(self.discardGems(newStates, gemind+1))
             else:
+                if (s.players[self.playerTurn].gemsOwned == self.players[self.playerTurn].gemsOwned):
+                    continue
                 out.append(s)
         return out
 
@@ -442,6 +443,30 @@ class GameState:
             utilVec[counter] = val*expDecay
             counter += 1
         return utilVec
+
+    #allEval2 modified
+    def allEvalX(self, numTurns, node):
+        utilVec = [0]*(len(node.players))
+        counter = 0
+        for player in node.players:
+            #winlose = 100*player.wonloss    #this should be a player held variable,
+                                        #1 if the player won, -1 if they lost,
+                                        #0 otherwise
+            score = 3*player.points
+            win = self.checkWinner()
+            winlose = 0
+            if (win == player):
+                winlose = 100
+            elif (win != -1):
+                winlose = -100
+                
+            #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
+            prestige = sum(player.cardsOwned)*2
+            gems = sum(player.gemsOwned) + player.gemsOwned[5]
+            val = score + prestige + gems + winlose #+ nobles 
+            utilVec[counter] = val
+            counter += 1
+        return utilVec
     
     #creates a copy of the state and advances it to the next turn
     def copyMe(self):
@@ -543,8 +568,8 @@ class PlayerFunctions:
             return cs
      
     def md(boardState):
-        depth = 1
-        ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
+        depth = 2
+        ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEvalX)
         out = ai.maxdec()
         if (verbose): print(out.name)
         return out
@@ -583,17 +608,20 @@ for i in range(10):
 
     cs.players.append(Player(PlayerFunctions.md))
     cs.players.append(Player(PlayerFunctions.ai_random))
-    cs.players.append(Player(PlayerFunctions.ai_random))
-    cs.players.append(Player(PlayerFunctions.ai_random))
 
     for i in range(len(cs.players)):
         cs.players[i].id = i
 
     cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
 
+    win = -1
+
     while cs != None:
-        cs = cs.gameStep()
+        out = cs.gameStep()
+        cs = out[0]
+        win = out[1]
 
-    winners[Rwinner] += 1
+    print(cs)
+    winners[win] += 1
 
-print("Minimax win rate:", winners[0]/sum(winners))
+print("Minimax win rate:", float(winners[0])/float(sum(winners)))
