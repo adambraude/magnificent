@@ -330,7 +330,7 @@ class GameState:
     def allEval2(self, numTurns, node):
         utilVec = [0]*(len(node.players))
         counter = 0
-        for player in currentBoard.players:
+        for player in node.players:
             #winlose = 100*player.wonloss    #this should be a player held variable,
                                         #1 if the player won, -1 if they lost,
                                         #0 otherwise
