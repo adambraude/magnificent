@@ -213,7 +213,7 @@ class GameState:
     #refills any open card slots
     def restockCards(self):
         for j in range(len(self.cards)):
-            while (len(self.cards[j]) < 4):
+            while (len(self.cards[j]) < 4 and len(self.decks[j]) > 0):
                 card = random.choice(self.decks[j])
                 self.cards[j].append(card)
                 self.decks[j].remove(card)
@@ -229,7 +229,10 @@ class GameState:
                 new.gemsAvailable[i] -= 2
                 new.players[self.playerTurn].gemsOwned[i] += 2
                 new.name = "take 2" + colors[i]
-                self.childrenL.append(new)
+                if (sum(new.players[self.playerTurn].gemsOwned) > 10):
+                    self.childrenL.extend(self.discardGems([new], 0))
+                else:
+                    self.childrenL.append(new)
         #take 1 from up to 3 different places
         for i in range(len(self.gemsAvailable)-3):
             for j in range(i+1, len(self.gemsAvailable)-2):
@@ -249,7 +252,10 @@ class GameState:
                             new.gemsAvailable[k] -= 1
                             new.players[self.playerTurn].gemsOwned[k] += 1
                             new.name += colors[k]
-                        self.childrenL.append(new)
+                        if (sum(new.players[self.playerTurn].gemsOwned) > 10):
+                            self.childrenL.extend(self.discardGems([new], 0))
+                        else:
+                            self.childrenL.append(new)
         #buy card
         for i in range(len(self.cards)):
             for j in range(len(self.cards[i])):
@@ -284,8 +290,29 @@ class GameState:
                         new.gemsAvailable[len(self.gemsAvailable)-1] -= 1
                     p.reserve.append(card)
                     self.childrenL.append(new)
-            
         return self.childrenL
+
+    #discards down to 10 gems if over
+    #returns a list of states
+    def discardGems(self, states, gemind):
+        out = []
+        for s in states:
+            p = s.players[self.playerTurn]
+            if (sum(p.gemsOwned) > 10):
+                if (gemind == len(self.gemsAvailable)-1):
+                    continue
+                newStates = []
+                for i in range(min(p.gemsOwned[gemind], sum(p.gemsOwned) - 10)):
+                    newState = copy.deepcopy(s)
+                    newState.name += "return" + str(i) + colors[gemind]
+                    p = newState.players[self.playerTurn]
+                    p.gemsOwned[gemind] -= i
+                    newState.gemsAvailable[gemind] += i
+                    newStates.append(newState)
+                out.extend(self.discardGems(newStates, gemind+1))
+            else:
+                out.append(s)
+        return out
 
     #purchase a card
     def buyCard(self, state, card):
@@ -469,8 +496,7 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        depth = 1
-        print("init md with", boardState.playerTurn)
+        depth = 2
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
         out = ai.maxdec()
         if (verbose): print(out.name)
