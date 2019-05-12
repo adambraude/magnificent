@@ -2,6 +2,7 @@ import random
 import copy
 import minimax
 from MaxDec import *
+from AllRandom import *
 
 print ("Hello, and welcome to Splandor!")
 
@@ -382,7 +383,7 @@ class GameState:
     #Returns a score for the highest fraction of a noble a player has
     #If player doesn't have noble, return (the highest percentage of nobles
     #on board)/(3). If player already has a noble, return zero.
-    def fracOfNobles(self, player, node):
+    def fracOfNobles(self, player, state):
         total = 0
         for noble in state.nobles:
             nobleTotal = 0
@@ -545,6 +546,16 @@ class PlayerFunctions:
         depth = 1
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
         out = ai.maxdec()
+        if (verbose): print(out.name)
+        return out
+
+    def allR(boardState):
+        depth = 0
+        samples = 10
+        playerList = boardState.players
+        startingPlayer = boardState.playerTurn
+        ai = AllRandom(boardState, playerList, startingPlayer, depth, samples, boardState.modifiedEval)
+        out = ai.outer_ran()
         if (verbose): print(out.name)
         return out
 
