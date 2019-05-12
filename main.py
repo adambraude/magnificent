@@ -378,6 +378,45 @@ class GameState:
                 state.nobles.remove(n)
                 p.points += 3
                 break
+
+    #Returns a score for the highest fraction of a noble a player has
+    #If player doesn't have noble, return (the highest percentage of nobles
+    #on board)/(3). If player already has a noble, return zero.
+    def fracOfNobles(self, player, node):
+        total = 0
+        for noble in state.nobles:
+            nobleTotal = 0
+            playerTotal = 0
+            for i in range(len(player.cardsOwned)-1):
+                if player.cardsOwned[i] >= noble[i]:
+                    nobleTotal += noble[i]
+                    playerTotal += noble[i]
+
+                if player.cardsOwned[i] < noble[i]:
+                    nobleTotal += noble[i]
+                    playerTotal += player.cardsOwned[i]
+
+            playerPercent = (playerTotal/nobleTotal)
+            total += playerPercent
+
+        return (total/3)
+
+    def modifiedEval(self, numTurns, node):
+        utilVec = [0]*(len(node.players))
+        counter = 0
+        for player in node.players:
+            #winlose = 100*player.wonloss    #this should be a player held variable,
+                                        #1 if the player won, -1 if they lost,
+                                        #0 otherwise
+            score = 1.5*player.points
+            nobles = self.fracOfNobles(player, node)
+            prestige = sum(player.cardsOwned)
+            gems = sum(player.gemsOwned)
+            val = score + prestige + gems + nobles #+ winlose
+            expDecay = .9**numTurns
+            utilVec[counter] = val*expDecay
+            counter += 1
+        return utilVec
     
     #The heuristic from the thesis.
     #This heuristic also uses a function of .9^NumTurns in the future this is from.
@@ -500,7 +539,6 @@ class PlayerFunctions:
             print("Error: no legal moves")
             return cs
      
-    #Needs id to work correctly
     def md(boardState):
         depth = 1
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
