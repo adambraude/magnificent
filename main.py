@@ -290,6 +290,10 @@ class GameState:
                         new.gemsAvailable[len(self.gemsAvailable)-1] -= 1
                     p.reserve.append(card)
                     self.childrenL.append(new)
+        if (len(self.childrenL) == 0):
+            new = self.copyMe()
+            new.name = "pass"
+            self.childrenL.append(new)
         return self.childrenL
 
     #discards down to 10 gems if over
@@ -469,7 +473,7 @@ class Player:
             state += " " + str(self.gemsOwned[i]) + "(+" +str(self.cardsOwned[i]) + ")" + colors[i]
         print(state)
         count = 1
-        print("Cards in Reserve: ")
+        print("Cards in Reserve: ", len(self.reserve))
         for i in range(len(self.reserve)):
             state = ""
             for k in range(len(self.reserve[i])):
@@ -496,14 +500,14 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        depth = 2
+        depth = 3
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
         out = ai.maxdec()
         if (verbose): print(out.name)
         return out
 
 for i in range(numPlayers):
-    cs.players.append(Player(PlayerFunctions.md))
+    cs.players.append(Player(PlayerFunctions.ai_random))
     cs.players[i].id = i
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)

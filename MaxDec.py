@@ -62,6 +62,7 @@ class MaxDec:
                 bestValues = valvec
                 bestNode = state
 
+        self.currentDepth -= 1
         return [bestValues, bestNode]
 
     #                     #
