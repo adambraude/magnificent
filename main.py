@@ -341,6 +341,7 @@ class GameState:
             val = score + prestige + gems #+ nobles + winlose
             expDecay = .9**numTurns
             utilVec[counter] = val*expDecay
+            counter += 1
         return utilVec
     
     #creates a copy of the state and advances it to the next turn
@@ -445,7 +446,8 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        ai = MaxDec(boardState, 0, boardState.players, boardState.playerid, boardState.allEval2)
+        depth = 2
+        ai = MaxDec(boardState, depth, boardState.players, boardState.playerid, boardState.allEval2)
         return ai.maxdec()
 
 for i in range(numPlayers):
