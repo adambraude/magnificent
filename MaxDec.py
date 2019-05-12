@@ -45,6 +45,7 @@ class MaxDec:
 
         self.currentDepth += 1
         currentPlayer = self.players[playerNum]
+        nextPlayerNum = (playerNum + 1) % len(self.players)
         next_nodes = self.boardState.children()
 
         infinity = float('inf')
@@ -53,7 +54,6 @@ class MaxDec:
         bestNode = None
         
         for state in next_nodes:
-            nextPlayerNum = (playerNum + 1) % len(self.players)
             oldvalues = self.multi_max(state, nextPlayerNum)
             valvec = oldvalues[0]
             max_value = valvec[playerNum]
