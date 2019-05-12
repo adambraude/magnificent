@@ -449,9 +449,6 @@ class GameState:
         utilVec = [0]*(len(node.players))
         counter = 0
         for player in node.players:
-            #winlose = 100*player.wonloss    #this should be a player held variable,
-                                        #1 if the player won, -1 if they lost,
-                                        #0 otherwise
             score = 3*player.points
             win = self.checkWinner()
             winlose = 0
@@ -460,10 +457,10 @@ class GameState:
             elif (win != -1):
                 winlose = -100
                 
-            #nobles = 2.5*player.noble       #should be 1 if has noble, 0 otherwise
+            nobles = self.fracOfNobles(player, node)
             prestige = sum(player.cardsOwned)*2
             gems = sum(player.gemsOwned) + player.gemsOwned[5]
-            val = score + prestige + gems + winlose #+ nobles 
+            val = score + prestige + gems + winlose + nobles 
             utilVec[counter] = val
             counter += 1
         return utilVec
