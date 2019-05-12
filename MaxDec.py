@@ -77,7 +77,7 @@ class MaxDec:
     # return false if the node has children (successor states)
     def isTerminal(self, node):
         assert node is not None
-        return (len(node.children()) == 0 or (self.currentDepth > self.cap))
+        return ((self.currentDepth > self.cap) or len(node.children()) == 0)
 
     #Will need to spit out a vector that has value for each player
     def getUtility(self, node, numTurns):

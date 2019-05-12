@@ -146,12 +146,19 @@ class GameState:
         self.playerTurn = 0
         self.childrenL = []
         self.name = "start of game"
-        self.playerid = -1
 
     #advance the game by one step and return the new state
     def gameStep(self):
         self.restockCards()
         if (verbose): self.printState()
+        win = self.checkWinner()
+        if (win != -1):
+            print("The winner is Player", win+1, "with a score of", self.players[win].points, "points")
+            return
+        if (verbose): print("Player", self.playerTurn+1, "turn:")
+        return self.players[self.playerTurn].playerFunction(self)
+
+    def checkWinner(self):
         if (self.playerTurn == 0):
             highestScore = 0
             numPlayers = 0
@@ -166,7 +173,7 @@ class GameState:
                     numPlayers += 1
             if highestScore >= 15:
                 if numPlayers == 1:
-                    print("The winner is Player", numPlayer+1, "with", highestScore, "points")
+                    return numPlayer
                 else:
                     #In ties, the player with the fewest development cards wins
                     #This is a fairly clunky way to do it, but should work
@@ -179,11 +186,8 @@ class GameState:
                             if (playerCards < fewestCards):
                                 fewestCards = playerCards
                                 winningPlayer = i
-                    print("The winner is Player", winningPlayer+1, "with a score of", highestScore, "points")
-                return
-        
-        if (verbose): print("Player", self.playerTurn+1, "turn:")
-        return self.players[self.playerTurn].playerFunction(self)
+                return winningPlayer
+        return -1
 
     #run this on the very first GameState
     def setupNewGame(self, decks, ndeck):
@@ -255,7 +259,7 @@ class GameState:
                     self.buyCard(new, card)
                     new.cards[i].remove(card)
                     new.name = "buy " + str(i*4+j)
-                    new.takeNobles()
+                    self.takeNobles(new)
                     self.childrenL.append(new)
         r = self.players[self.playerTurn].reserve
         #buy card from reserve
@@ -265,7 +269,7 @@ class GameState:
                 self.buyCard(new, r[i])
                 new.players[self.playerTurn].reserve.remove(r[i])
                 new.name = "buy reserve" + str(i)
-                new.takeNobles()
+                self.takeNobles(new)
                 self.childrenL.append(new)
         #reserve a card
         if len(r) < 3:
@@ -313,20 +317,21 @@ class GameState:
             return 1
         return 0
 
-    #checks if nobles are available, takes one if possible
+    #checks if nobles are available, takes one if possible.
     #simplification: if multiple nobles are available, take a random one
-    def takeNobles(self):
+    def takeNobles(self, state):
         p = state.players[self.playerTurn]
-        random.shuffle(self.nobles)
-        for n in self.nobles:
+        random.shuffle(state.nobles)
+        for n in state.nobles:
             nyes = 1
             for i in range(len(p.cardsOwned)-1):
                 if p.cardsOwned[i] < n[i]:
                     nyes = 0
                     break
             if nyes:
-                self.nobles.remove(n)
+                state.nobles.remove(n)
                 p.points += 3
+                break
                 
 
     #return a heuristic value ~ this should be replaced with a collection
@@ -464,12 +469,14 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        depth = 2
-        ai = MaxDec(boardState, depth, boardState.players, boardState.playerid, boardState.allEval2)
-        return ai.maxdec()
+        depth = 1
+        print("init md with", boardState.playerTurn)
+        ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
+        out = ai.maxdec()
+        if (verbose): print(out.name)
+        return out
 
 for i in range(numPlayers):
-    cs.playerid = i
     cs.players.append(Player(PlayerFunctions.md))
     cs.players[i].id = i
 
