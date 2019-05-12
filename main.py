@@ -146,10 +146,13 @@ class GameState:
         self.playerTurn = 0
         self.childrenL = []
         self.name = "start of game"
+        self.strippedCopy = None
 
     #advance the game by one step and return the new state
     def gameStep(self):
         self.restockCards()
+        self.childrenL = []
+        self.strippedCopy = None
         if (verbose): self.printState()
         win = self.checkWinner()
         if (win != -1):
@@ -288,6 +291,10 @@ class GameState:
                     if new.gemsAvailable[len(self.gemsAvailable)-1]:
                         p.gemsOwned[len(self.gemsAvailable)-1] += 1
                         new.gemsAvailable[len(self.gemsAvailable)-1] -= 1
+                        if (sum(new.players[self.playerTurn].gemsOwned) > 10):
+                            self.childrenL.extend(self.discardGems([new], 0))
+                        else:
+                            self.childrenL.append(new)
                     p.reserve.append(card)
                     self.childrenL.append(new)
         if (len(self.childrenL) == 0):
@@ -363,18 +370,6 @@ class GameState:
                 state.nobles.remove(n)
                 p.points += 3
                 break
-                
-
-    #return a heuristic value ~ this should be replaced with a collection
-    #of heuristic functions that can be plugged in to minimax
-    def value(self):
-        pt = self.playerTurn -1
-        if pt < 0: pt += len(self.players)
-        p = self.players[pt]
-        val = p.points*3
-        val += sum(p.cardsOwned)
-        val += sum(p.gemsOwned)
-        return val
     
     #The heuristic from the thesis.
     #This heuristic also uses a function of .9^NumTurns in the future this is from.
@@ -400,8 +395,11 @@ class GameState:
     
     #creates a copy of the state and advances it to the next turn
     def copyMe(self):
-        out = copy.deepcopy(self)
-        out.childrenL = []
+        if self.strippedCopy == None:
+            self.strippedCopy = copy.deepcopy(self)
+            self.strippedCopy.childrenL = []
+        out = copy.deepcopy(self.strippedCopy)
+        out.strippedCopy = None
         out.playerTurn += 1
         if (out.playerTurn == len(out.players)):
             out.playerTurn=0
@@ -500,14 +498,14 @@ class PlayerFunctions:
      
     #Needs id to work correctly
     def md(boardState):
-        depth = 3
+        depth = 1
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEval2)
         out = ai.maxdec()
         if (verbose): print(out.name)
         return out
 
 for i in range(numPlayers):
-    cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.md))
     cs.players[i].id = i
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
