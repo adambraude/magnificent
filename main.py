@@ -255,6 +255,7 @@ class GameState:
                     self.buyCard(new, card)
                     new.cards[i].remove(card)
                     new.name = "buy " + str(i*4+j)
+                    new.takeNobles()
                     self.childrenL.append(new)
         r = self.players[self.playerTurn].reserve
         #buy card from reserve
@@ -264,6 +265,7 @@ class GameState:
                 self.buyCard(new, r[i])
                 new.players[self.playerTurn].reserve.remove(r[i])
                 new.name = "buy reserve" + str(i)
+                new.takeNobles()
                 self.childrenL.append(new)
         #reserve a card
         if len(r) < 3:
@@ -310,6 +312,22 @@ class GameState:
         if p.gemsOwned[len(self.gemsAvailable)-1] >= -wild:
             return 1
         return 0
+
+    #checks if nobles are available, takes one if possible
+    #simplification: if multiple nobles are available, take a random one
+    def takeNobles(self):
+        p = state.players[self.playerTurn]
+        random.shuffle(self.nobles)
+        for n in self.nobles:
+            nyes = 1
+            for i in range(len(p.cardsOwned)-1):
+                if p.cardsOwned[i] < n[i]:
+                    nyes = 0
+                    break
+            if nyes:
+                self.nobles.remove(n)
+                p.points += 3
+                
 
     #return a heuristic value ~ this should be replaced with a collection
     #of heuristic functions that can be plugged in to minimax
