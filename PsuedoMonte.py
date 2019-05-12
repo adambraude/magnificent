@@ -1,50 +1,69 @@
 #An algorithm based on random moves
-#Currently has a runTime of numSamples^(depth+1). Could decrease this with some sort of
+#Currently has a runTime of numSamples^(depth). Could decrease this with some sort of
 #decay operation for the number of samples taken at deeper levels.
 class PsuedoMonte:
-    def __init__(self, boardState, players, startingPlayer, depth, samples, evalFunc):
+    def __init__(self, boardState, startingPlayer, depth, samples, evalFunc):
         self.boardState = boardState
-        self.players = players
         self.startingPlayer = startingPlayer
-        self.currentDepth = -1  #If started at 0, if the user gave a depth of zero, the is
-                                #isTerminal check would only run on the initial boardState
-                                #without looking at any of the children nodes
-        self.maxDepth = depth
+        self.currentDepth = 0
+        self.maxDepth = depth #Note that starting with a depth of zero is just a greedy search
         self.evalFunc = evalFunc
         self.samples = samples
 
+    #Checks an inputted amount of random paths for each child, takes the average, and returns
+    # the move with the highest average score
     def outer_monte(self, numSamples):
         bestMove = None
         infinity = float('inf')
         bestScore = -infinity
+
+        nextNodes = self.boardState.children()
+        counter = 0
+        bestAverage = 0
+        bestMove = None
         
-        while counter < numSamples:
-            possMove = monte(self.boardState, self.samples, self.startingPlayer)
-            if possMove[1] > bestScore:
-                bestScore = possMove[1]
-                bestMove = possMove[0]
+        for state in nextNodes:
+            score = 0
+            while counter < self.samples:
+                counter+= 1
+                stateVal = monte(state, self.samples)
+                sampleVec = stateVal[0]
+                score += sampleVec[self.startingPlayer]
+
+            moveAverage = (score/self.samples)
+            if moveAverage > bestAverage:
+                bestAverage = moveAverage
+                bestMove = state
 
         return bestMove
 
-    def monte(self, state, numSamples, playerNum):
+    #For a given random child for a parent, what is the average score of its children
+    #This doesn't find the best move, it finds the average score for making this move
+    def monte(self, state, numSamples):
         if self.isTerminal(node):
-            return [self.getUtility(node, self.currentDepth), node]
+            return self.getUtility(node, self.currentDepth)
 
         currentDepth += 1
         
         nextNodes = self.boardState.children()
         ranMove = random.choice(nextNodes)
-        checks = 0
-        average = 0
-        nextSamples = self.samples
-        while checks < numSamples:
-            nextPlayerNum = (playerNum + 1) % len(self.players)
-            ranMove = random.choice(nextNodes)
-            sampleVal = monte(self, ranMove, nextSamples, nextPlayerNum)
-            valVec = sampleVal[1]
-            average += valVec[playerNum]
+        ccounter = 0
 
-        return [ranMove, (average/numSamples)]
+        totalScore = [0] * len(self.players)
+        averageScore = [0]*len(self.players)
+        
+        nextSamples = self.samples
+        while counter < numSamples:
+            counter += 1
+            sampleVal = monte(self, ranMove, nextSamples)
+
+            for i in range(len(self.players)):
+                totalScore[i] += sampleVal[i]
+
+        for i in range(len(self.players)):
+                averageScore[i] = (totalScore[i]/numSamples)
+        
+        return averageScore
 
 
     #                     #
