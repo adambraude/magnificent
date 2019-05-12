@@ -401,6 +401,8 @@ class GameState:
 
         return (total/3)
 
+    #Modified allEval2 that gives scaling points for how close a player is to a
+    #noble
     def modifiedEval(self, numTurns, node):
         utilVec = [0]*(len(node.players))
         counter = 0
