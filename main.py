@@ -6,11 +6,12 @@ from MaxDec import *
 print ("Hello, and welcome to Splandor!")
 
 verbose = 1
+Rwinner = -1
 
 colors = "W", "U", "G", "R", "B", "Y"
 
 # color, points, white, blue, green, red, black
-tier1Deck = [
+fresh_tier1Deck = [
 (4, 0, 1, 1, 1, 1, 0),
 (4, 0, 1, 2, 1, 1, 0),
 (4, 0, 2, 2, 0, 1, 0),
@@ -57,7 +58,7 @@ tier1Deck = [
 (3, 1, 4, 0, 0, 0, 0)
     ]
 
-tier2Deck = [
+fresh_tier2Deck = [
 (4, 1, 3, 2, 2, 0, 0),
 (4, 1, 3, 0, 3, 0, 2),
 (4, 2, 0, 1, 4, 2, 0),
@@ -94,7 +95,7 @@ tier2Deck = [
 (3, 3, 0, 0, 0, 6, 0)
     ]
 
-tier3Deck = [
+fresh_tier3Deck = [
 (4, 3, 3, 3, 5, 3, 0),
 (4, 4, 0, 0, 0, 7, 0),
 (4, 4, 0, 0, 3, 6, 3),
@@ -121,7 +122,7 @@ tier3Deck = [
 (3, 5, 0, 0, 7, 3, 0)
     ]
 
-nobles = [
+fresh_nobles = [
 (0, 0, 3, 3, 3),
 (3, 3, 3, 0, 0),
 (3, 3, 0, 0, 3),
@@ -133,6 +134,8 @@ nobles = [
 (4, 0, 0, 0, 4),
 (0, 0, 0, 4, 4)
     ]
+
+
 
 class GameState:
     
@@ -157,6 +160,7 @@ class GameState:
         win = self.checkWinner()
         if (win != -1):
             print("The winner is Player", win+1, "with a score of", self.players[win].points, "points")
+            Rwinner = win
             return
         if (verbose): print("Player", self.playerTurn+1, "turn:")
         return self.players[self.playerTurn].playerFunction(self)
@@ -208,8 +212,9 @@ class GameState:
                 self.cards[j].append(card)
                 decks[j].remove(card)
         self.decks = decks
-        self.printState()
-        print("Player", self.playerTurn+1, "turn:")
+        if (verbose):
+            self.printState()
+            print("Player", self.playerTurn+1, "turn:")
         self.players[self.playerTurn].playerFunction(self)
         self.children()
 
@@ -267,7 +272,7 @@ class GameState:
                     new = self.copyMe()
                     self.buyCard(new, card)
                     new.cards[i].remove(card)
-                    new.name = "buy " + str(i*4+j)
+                    new.name = "buy " + str(i*4+j+1)
                     self.takeNobles(new)
                     self.childrenL.append(new)
         r = self.players[self.playerTurn].reserve
@@ -277,7 +282,7 @@ class GameState:
                 new = self.copyMe()
                 self.buyCard(new, r[i])
                 new.players[self.playerTurn].reserve.remove(r[i])
-                new.name = "buy reserve" + str(i)
+                new.name = "buy reserve " + str(i+1)
                 self.takeNobles(new)
                 self.childrenL.append(new)
         #reserve a card
@@ -291,12 +296,12 @@ class GameState:
                     if new.gemsAvailable[len(self.gemsAvailable)-1]:
                         p.gemsOwned[len(self.gemsAvailable)-1] += 1
                         new.gemsAvailable[len(self.gemsAvailable)-1] -= 1
-                        if (sum(new.players[self.playerTurn].gemsOwned) > 10):
-                            self.childrenL.extend(self.discardGems([new], 0))
-                        else:
-                            self.childrenL.append(new)
                     p.reserve.append(card)
-                    self.childrenL.append(new)
+                    new.name = "reserve " + str(i*4+j+1) 
+                    if (sum(new.players[self.playerTurn].gemsOwned) > 10):
+                        self.childrenL.extend(self.discardGems([new], 0))
+                    else:
+                        self.childrenL.append(new)
         if (len(self.childrenL) == 0):
             new = self.copyMe()
             new.name = "pass"
@@ -441,20 +446,6 @@ class GameState:
             self.players[i].printState()
     pass
 
-cs = GameState()
-
-print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
-print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
-print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
-print ("Noble deck initialized with", len(nobles), "tiles")
-
-numPlayers = 0
-
-while numPlayers < 2 or numPlayers > 4:
-    numPlayers = int(input("How many players? (2-4)"))
-    if (numPlayers < 2 or numPlayers > 4):
-        print("invalid player count:", numPlayers)
-
 class Player:
     def __init__(self, playerFunction):
         self.playerFunction = playerFunction
@@ -486,7 +477,17 @@ class Player:
 
 class PlayerFunctions:
     def human(boardState):
-        print("Please enter a command")
+        valid = 0
+        while(not valid):
+            command = input("Please enter a command: ")
+            if (command == "help"):
+                for s in boardState.children():
+                    print(s.name, " ")
+            else:
+                for s in boardState.children():
+                    if (s.name == command):
+                        return s
+        
     def ai_random(boardState):
         if len(boardState.children()):
             out = random.choice(boardState.children())
@@ -504,12 +505,34 @@ class PlayerFunctions:
         if (verbose): print(out.name)
         return out
 
-for i in range(numPlayers):
-    cs.players.append(Player(PlayerFunctions.md))
+numPlayers = 0
+
+#while numPlayers < 2 or numPlayers > 4:
+#    numPlayers = int(input("How many players? (2-4)"))
+#    if (numPlayers < 2 or numPlayers > 4):
+#        print("invalid player count:", numPlayers)
+
+tier1Deck = copy.deepcopy(fresh_tier1Deck)
+tier2Deck = copy.deepcopy(fresh_tier2Deck)
+tier3Deck = copy.deepcopy(fresh_tier3Deck)
+nobles = copy.deepcopy(fresh_nobles)
+
+cs = GameState()
+
+print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
+print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
+print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
+print ("Noble deck initialized with", len(nobles), "tiles")
+
+cs.players.append(Player(PlayerFunctions.human))
+cs.players.append(Player(PlayerFunctions.md))
+cs.players.append(Player(PlayerFunctions.ai_random))
+
+for i in range(len(cs.players)):
     cs.players[i].id = i
 
 cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
 
 while cs != None:
-    print(cs)
     cs = cs.gameStep()
+
