@@ -1,10 +1,14 @@
 #An algorithm based on random moves
+#Currently has a runTime of numSamples^(depth+1). Could decrease this with some sort of
+#decay operation for the number of samples taken at deeper levels.
 class PsuedoMonte:
     def __init__(self, boardState, players, startingPlayer, depth, samples, evalFunc):
         self.boardState = boardState
         self.players = players
         self.startingPlayer = startingPlayer
-        self.currentDepth = 0
+        self.currentDepth = -1  #If started at 0, if the user gave a depth of zero, the is
+                                #isTerminal check would only run on the initial boardState
+                                #without looking at any of the children nodes
         self.maxDepth = depth
         self.evalFunc = evalFunc
         self.samples = samples
