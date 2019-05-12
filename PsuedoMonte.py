@@ -1,3 +1,4 @@
+import random
 #An algorithm based on random moves
 #Currently has a runTime of numSamples^(depth). Could decrease this with some sort of
 #decay operation for the number of samples taken at deeper levels.
@@ -12,10 +13,11 @@ class PsuedoMonte:
 
     #Checks an inputted amount of random paths for each child, takes the average, and returns
     # the move with the highest average score
-    def outer_monte(self, numSamples):
+    def outer_monte(self):
         bestMove = None
         infinity = float('inf')
         bestScore = -infinity
+        numSamples = self.samples
 
         nextNodes = self.boardState.children()
         counter = 0
@@ -26,9 +28,8 @@ class PsuedoMonte:
             score = 0
             while counter < self.samples:
                 counter+= 1
-                stateVal = monte(state, self.samples)
-                sampleVec = stateVal[0]
-                score += sampleVec[self.startingPlayer]
+                stateVal = self.monte(state, self.samples)
+                score += stateVal[self.startingPlayer]
 
             moveAverage = (score/self.samples)
             if moveAverage > bestAverage:
@@ -40,27 +41,27 @@ class PsuedoMonte:
     #For a given random child for a parent, what is the average score of its children
     #This doesn't find the best move, it finds the average score for making this move
     def monte(self, state, numSamples):
-        if self.isTerminal(node):
-            return self.getUtility(node, self.currentDepth)
+        if self.isTerminal(state):
+            return self.getUtility(state, self.currentDepth)
 
-        currentDepth += 1
+        self.currentDepth += 1
         
         nextNodes = self.boardState.children()
         ranMove = random.choice(nextNodes)
-        ccounter = 0
+        counter = 0
 
-        totalScore = [0] * len(self.players)
-        averageScore = [0]*len(self.players)
+        totalScore = [0] * len(state.players)
+        averageScore = [0]*len(state.players)
         
         nextSamples = self.samples
         while counter < numSamples:
             counter += 1
-            sampleVal = monte(self, ranMove, nextSamples)
+            sampleVal = self.monte(ranMove, nextSamples)
 
-            for i in range(len(self.players)):
+            for i in range(len(state.players)):
                 totalScore[i] += sampleVal[i]
 
-        for i in range(len(self.players)):
+        for i in range(len(state.players)):
                 averageScore[i] = (totalScore[i]/numSamples)
         
         return averageScore

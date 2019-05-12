@@ -3,6 +3,7 @@ import copy
 import minimax
 from MaxDec import *
 from AllRandom import *
+from PsuedoMonte import *
 
 print ("Hello, and welcome to Splandor!")
 
@@ -571,13 +572,23 @@ class PlayerFunctions:
         if (verbose): print(out.name)
         return out
 
-    def allR(boardState):
+    #Currently hits an infinite loop, or just a stupid long run time
+    def allr(boardState):
         depth = 0
         samples = 10
         playerList = boardState.players
         startingPlayer = boardState.playerTurn
-        ai = AllRandom(boardState, playerList, startingPlayer, depth, samples, boardState.modifiedEval)
+        ai = AllRandom(boardState, playerList, startingPlayer, depth, samples, boardState.allEvalX)
         out = ai.outer_ran()
+        if (verbose): print(out.name)
+        return out
+    #Works, can probably use some optimization
+    def pm(boardState):
+        startingPlayer = boardState.playerTurn
+        depth = 0
+        samples = 100
+        ai = PsuedoMonte(boardState, startingPlayer, depth, samples, boardState.allEvalX)
+        out = ai.outer_monte()
         if (verbose): print(out.name)
         return out
 
