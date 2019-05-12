@@ -5,7 +5,7 @@ from MaxDec import *
 
 print ("Hello, and welcome to Splandor!")
 
-verbose = 1
+verbose = 0
 Rwinner = -1
 
 colors = "W", "U", "G", "R", "B", "Y"
@@ -238,13 +238,14 @@ class GameState:
                 new.players[self.playerTurn].gemsOwned[i] += 2
                 new.name = "take 2" + colors[i]
                 if (sum(new.players[self.playerTurn].gemsOwned) > 10):
-                    self.childrenL.extend(self.discardGems([new], 0))
+                    #self.childrenL.extend(self.discardGems([new], 0))
+                    pass
                 else:
                     self.childrenL.append(new)
         #take 1 from up to 3 different places
-        for i in range(len(self.gemsAvailable)-3):
-            for j in range(i+1, len(self.gemsAvailable)-2):
-                for k in range(i+j+1, len(self.gemsAvailable)-1):
+        for i in range(len(self.gemsAvailable)-1):
+            for j in range(i+1, len(self.gemsAvailable)-1):
+                for k in range(j+1, len(self.gemsAvailable)-1):
                     if self.gemsAvailable[i] >= 1 or self.gemsAvailable[j] >= 1 or self.gemsAvailable[k] >= 1:
                         new = self.copyMe()
                         new.name = "take "
@@ -261,7 +262,8 @@ class GameState:
                             new.players[self.playerTurn].gemsOwned[k] += 1
                             new.name += colors[k]
                         if (sum(new.players[self.playerTurn].gemsOwned) > 10):
-                            self.childrenL.extend(self.discardGems([new], 0))
+                            #self.childrenL.extend(self.discardGems([new], 0))
+                            pass
                         else:
                             self.childrenL.append(new)
         #buy card
@@ -313,14 +315,15 @@ class GameState:
     def discardGems(self, states, gemind):
         out = []
         for s in states:
-            p = s.players[self.playerTurn]
-            if (sum(p.gemsOwned) > 10):
+            ps = s.players[self.playerTurn]
+            if (sum(ps.gemsOwned) > 10):
                 if (gemind == len(self.gemsAvailable)-1):
                     continue
                 newStates = []
-                for i in range(min(p.gemsOwned[gemind], sum(p.gemsOwned) - 10)):
+                for i in range(min(ps.gemsOwned[gemind], sum(ps.gemsOwned) - 10)+1):
                     newState = copy.deepcopy(s)
-                    newState.name += "return" + str(i) + colors[gemind]
+                    if (i > 0):
+                        newState.name += "return" + str(i) + colors[gemind]
                     p = newState.players[self.playerTurn]
                     p.gemsOwned[gemind] -= i
                     newState.gemsAvailable[gemind] += i
@@ -511,28 +514,35 @@ numPlayers = 0
 #    numPlayers = int(input("How many players? (2-4)"))
 #    if (numPlayers < 2 or numPlayers > 4):
 #        print("invalid player count:", numPlayers)
+winners = [0,0]
 
-tier1Deck = copy.deepcopy(fresh_tier1Deck)
-tier2Deck = copy.deepcopy(fresh_tier2Deck)
-tier3Deck = copy.deepcopy(fresh_tier3Deck)
-nobles = copy.deepcopy(fresh_nobles)
+for i in range(10):
+    
+    tier1Deck = copy.deepcopy(fresh_tier1Deck)
+    tier2Deck = copy.deepcopy(fresh_tier2Deck)
+    tier3Deck = copy.deepcopy(fresh_tier3Deck)
+    nobles = copy.deepcopy(fresh_nobles)
 
-cs = GameState()
+    cs = GameState()
 
-print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
-print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
-print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
-print ("Noble deck initialized with", len(nobles), "tiles")
+    print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
+    print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
+    print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
+    print ("Noble deck initialized with", len(nobles), "tiles")
 
-cs.players.append(Player(PlayerFunctions.human))
-cs.players.append(Player(PlayerFunctions.md))
-cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.md))
+    cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.ai_random))
 
-for i in range(len(cs.players)):
-    cs.players[i].id = i
+    for i in range(len(cs.players)):
+        cs.players[i].id = i
 
-cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
+    cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
 
-while cs != None:
-    cs = cs.gameStep()
+    while cs != None:
+        cs = cs.gameStep()
 
+    winners[Rwinner] += 1
+
+print("Minimax win rate:", winners[0]/sum(winners))
