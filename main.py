@@ -4,6 +4,7 @@ import minimax
 from MaxDec import *
 from AllRandom import *
 from PsuedoMonte import *
+from RMaxDec import *
 
 print ("Hello, and welcome to Splandor!")
 
@@ -458,11 +459,12 @@ class GameState:
             elif (win != -1):
                 winlose = -100
                 
-            nobles = self.fracOfNobles(player, node)
+            #nobles = self.fracOfNobles(player, node)
             prestige = sum(player.cardsOwned)*2
             gems = sum(player.gemsOwned) + player.gemsOwned[5]
-            val = score + prestige + gems + winlose + nobles 
-            utilVec[counter] = val
+            val = score + prestige + gems + winlose #+ nobles 
+            expDecay = .9**numTurns
+            utilVec[counter] = val*expDecay
             counter += 1
         return utilVec
     
@@ -571,6 +573,13 @@ class PlayerFunctions:
         out = ai.maxdec()
         if (verbose): print(out.name)
         return out
+    
+    def rmd(boardState):
+        depth = 2
+        ai = RMaxDec(boardState, depth, boardState.playerTurn, boardState.allEvalX,3)
+        out = ai.Rmaxdec()
+        if (verbose): print(out.name)
+        return out
 
     #Currently hits an infinite loop, or just a stupid long run time
     def allr(boardState):
@@ -598,7 +607,7 @@ numPlayers = 0
 #    numPlayers = int(input("How many players? (2-4)"))
 #    if (numPlayers < 2 or numPlayers > 4):
 #        print("invalid player count:", numPlayers)
-winners = [0,0]
+winners = [0,0,0,0]
 
 for i in range(10):
     
@@ -614,8 +623,11 @@ for i in range(10):
     print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
     print ("Noble deck initialized with", len(nobles), "tiles")
 
+    
     cs.players.append(Player(PlayerFunctions.md))
+    cs.players.append(Player(PlayerFunctions.rmd))
     cs.players.append(Player(PlayerFunctions.ai_random))
+    cs.players.append(Player(PlayerFunctions.pm))
 
     for i in range(len(cs.players)):
         cs.players[i].id = i
@@ -633,3 +645,4 @@ for i in range(10):
     winners[win] += 1
 
 print("Minimax win rate:", float(winners[0])/float(sum(winners)))
+print(winners)
