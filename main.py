@@ -162,7 +162,7 @@ class GameState:
         if (verbose): self.printState()
         win = self.checkWinner()
         if (win != -1):
-            print("The winner is Player", win+1, "with a score of", self.players[win].points, "points")
+            #print("The winner is Player", win+1, "with a score of", self.players[win].points, "points")
             return (None, win)
         if (verbose): print("Player", self.playerTurn+1, "turn:")
         return (self.players[self.playerTurn].playerFunction(self), -1)
@@ -566,15 +566,43 @@ class PlayerFunctions:
         else:
             print("Error: no legal moves")
             return cs
-     
+
     def md(boardState):
-        depth = 2
+        depth = 0
+        ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEvalX)
+        out = ai.maxdec()
+        if (verbose): print(out.name)
+        return out
+
+    def md1(boardState):
+        depth = 1
         ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEvalX)
         out = ai.maxdec()
         if (verbose): print(out.name)
         return out
     
+    def md2(boardState):
+        depth = 2
+        ai = MaxDec(boardState, depth, boardState.players, boardState.playerTurn, boardState.allEvalX)
+        out = ai.maxdec()
+        if (verbose): print(out.name)
+        return out
+
     def rmd(boardState):
+        depth = 0
+        ai = RMaxDec(boardState, depth, boardState.playerTurn, boardState.allEvalX,3)
+        out = ai.Rmaxdec()
+        if (verbose): print(out.name)
+        return out
+
+    def rmd1(boardState):
+        depth = 1
+        ai = RMaxDec(boardState, depth, boardState.playerTurn, boardState.allEvalX,3)
+        out = ai.Rmaxdec()
+        if (verbose): print(out.name)
+        return out
+    
+    def rmd2(boardState):
         depth = 2
         ai = RMaxDec(boardState, depth, boardState.playerTurn, boardState.allEvalX,3)
         out = ai.Rmaxdec()
@@ -583,19 +611,20 @@ class PlayerFunctions:
 
     #Currently hits an infinite loop, or just a stupid long run time
     def allr(boardState):
-        depth = 0
-        samples = 10
+        depth = 5
+        samples = 500
         playerList = boardState.players
         startingPlayer = boardState.playerTurn
-        ai = AllRandom(boardState, playerList, startingPlayer, depth, samples, boardState.allEvalX)
+        ai = AllRandom(boardState, startingPlayer, depth, samples, 100, boardState.allEvalX)
         out = ai.outer_ran()
         if (verbose): print(out.name)
         return out
+    
     #Works, can probably use some optimization
     def pm(boardState):
         startingPlayer = boardState.playerTurn
-        depth = 0
-        samples = 100
+        depth = 2
+        samples = 500
         ai = PsuedoMonte(boardState, startingPlayer, depth, samples, boardState.allEvalX)
         out = ai.outer_monte()
         if (verbose): print(out.name)
@@ -603,46 +632,94 @@ class PlayerFunctions:
 
 numPlayers = 0
 
+playerFuncs = [PlayerFunctions.ai_random, PlayerFunctions.md, PlayerFunctions.md1, PlayerFunctions.md2, PlayerFunctions.rmd, PlayerFunctions.rmd1, PlayerFunctions.rmd2, PlayerFunctions.allr, PlayerFunctions.pm]
+playerFuncsNames=["Random", "Multimax(0)", "Multimax(1)", "Multimax(2)", "RMultimax(0)", "RMultimax(1)", "RMultimax(2)", "AllRandom", "PseudoMonte"]
+
+for i in range(5,len(playerFuncs)-1):
+    for j in range(i+1,len(playerFuncs)):
+        winners = [0,0,0,0]
+        for k in range(8):
+            tier1Deck = copy.deepcopy(fresh_tier1Deck)
+            tier2Deck = copy.deepcopy(fresh_tier2Deck)
+            tier3Deck = copy.deepcopy(fresh_tier3Deck)
+            nobles = copy.deepcopy(fresh_nobles)
+
+            cs = GameState()
+
+            #print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
+            #print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
+            #print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
+            #print ("Noble deck initialized with", len(nobles), "tiles")
+
+            
+            cs.players.append(Player(playerFuncs[i]))
+            cs.players.append(Player(playerFuncs[j]))
+
+            for x in range(len(cs.players)):
+                cs.players[x].id = x
+
+            cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
+
+            win = -1
+
+            while cs != None:
+                out = cs.gameStep()
+                cs = out[0]
+                win = out[1]
+
+            winners[win] += 1
+        print(playerFuncsNames[i],"beats", playerFuncsNames[j], 100*float(winners[0])/float(sum(winners)), "percent of the time")
+
+print(winners)
+
+winners = [0,0,0,0,0,0,0,0,0]
+
+for i in range(0,len(playerFuncs)):
+    for j in range(i+1,len(playerFuncs)):
+        for k in range(j+1, len(playerFuncs)):
+                for z in range(1):
+                    tier1Deck = copy.deepcopy(fresh_tier1Deck)
+                    tier2Deck = copy.deepcopy(fresh_tier2Deck)
+                    tier3Deck = copy.deepcopy(fresh_tier3Deck)
+                    nobles = copy.deepcopy(fresh_nobles)
+
+                    cs = GameState()
+
+                    print ("Starting game", i, j, k)
+                    
+                    cs.players.append(Player(playerFuncs[i]))
+                    cs.players.append(Player(playerFuncs[j]))
+                    cs.players.append(Player(playerFuncs[k]))
+
+                    for x in range(len(cs.players)):
+                        cs.players[x].id = x
+
+                    cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
+
+                    win = -1
+
+                    while cs != None:
+                        out = cs.gameStep()
+                        cs = out[0]
+                        win = out[1]
+
+                    if (win == 0):
+                        w = i
+                    elif win == 1:
+                        w = j
+                    elif win == 2:
+                        w = k
+                        
+                    winners[w] += 1
+
+print(winners)
+for i in range(len(playerFuncs)):
+    print(playerFuncsNames[i],"wins", 100*float(winners[i])/float(sum(winners)), "percent of the time")
+                
+
 #while numPlayers < 2 or numPlayers > 4:
 #    numPlayers = int(input("How many players? (2-4)"))
 #    if (numPlayers < 2 or numPlayers > 4):
 #        print("invalid player count:", numPlayers)
-winners = [0,0,0,0]
 
-for i in range(10):
-    
-    tier1Deck = copy.deepcopy(fresh_tier1Deck)
-    tier2Deck = copy.deepcopy(fresh_tier2Deck)
-    tier3Deck = copy.deepcopy(fresh_tier3Deck)
-    nobles = copy.deepcopy(fresh_nobles)
 
-    cs = GameState()
-
-    print ("Tier 1 deck initialized with", len(tier1Deck), "cards")
-    print ("Tier 2 deck initialized with", len(tier2Deck), "cards")
-    print ("Tier 3 deck initialized with", len(tier3Deck), "cards")
-    print ("Noble deck initialized with", len(nobles), "tiles")
-
-    
-    cs.players.append(Player(PlayerFunctions.md))
-    cs.players.append(Player(PlayerFunctions.rmd))
-    cs.players.append(Player(PlayerFunctions.ai_random))
-    cs.players.append(Player(PlayerFunctions.pm))
-
-    for i in range(len(cs.players)):
-        cs.players[i].id = i
-
-    cs.setupNewGame([tier1Deck, tier2Deck, tier3Deck], nobles)
-
-    win = -1
-
-    while cs != None:
-        out = cs.gameStep()
-        cs = out[0]
-        win = out[1]
-
-    print(cs)
-    winners[win] += 1
-
-print("Minimax win rate:", float(winners[0])/float(sum(winners)))
-print(winners)
