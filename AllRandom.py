@@ -3,70 +3,62 @@ import random
 #Currently has a runTime of numSamples^(depth+1). Could decrease this with some sort of
 #decay operation for the number of samples taken at deeper levels.
 
-#The idea of this ai is that it takes an inputted amount of samples, generates that number of
-#possible moves from the current state, then generates a random path from the random sample
-#for a given depth. It then returns the highest scoring path found this way.
-#This is a random greedy algorithm.
+#The idea of this ai is that it takes an inputted amount of samples, generates the
+#numPaths amount of random moves from that sample, then returns the sample that has the
+#highest possible value for a path.
+#This is basically a random greedy algorithm.
 class AllRandom:
-    def __init__(self, boardState, players, startingPlayer, depth, samples, evalFunc):
+    def __init__(self, boardState, startingPlayer, depth, samples, numPaths, evalFunc):
         self.boardState = boardState
-        self.players = players
         self.startingPlayer = startingPlayer
-        self.currentDepth = -1  #If started at 0, if the user gave a depth of zero, the is
-                                #isTerminal check would only run on the initial boardState
-                                #without looking at any of the children nodes
+        self.currentDepth = 0
         self.maxDepth = depth
         self.evalFunc = evalFunc
         self.samples = samples
+        self.numPaths = numPaths
 
     def outer_ran(self):
         bestMove = None
-        infinity = float('inf')
-        bestScore = -infinity
-        numSamples = self.samples
-        counter = 0
         
-        while counter < numSamples:
+        infinity = float('inf')
+        
+        bestMoveVal = -infinity
+        sampleMoves = self.samples
+        counter = 0
+        innerLoop = 0
+
+        possNodes = self.boardState.children()
+        
+        while counter < sampleMoves:
             counter += 1
-            possMove = self.ran_path(self.boardState, self.samples, self.startingPlayer)
-            sampleVec = possMove[0]
-            if sampleVec[self.startingPlayer] > bestScore:
-                bestScore = sampleVec[self.startingPlayer]
-                bestMove = possMove[1]
+            sampleNode = random.choice(possNodes)
+            sampleVal = -infinity
+            while innerLoop < self.numPaths:
+                innerLoop += 1
+                ranPathVec = self.ran_path(sampleNode)
+                sampleScore = ranPathVec[self.startingPlayer]
+                if sampleScore > sampleVal:
+                    sampleVal = sampleScore
+
+            if sampleVal > bestMoveVal:
+                bestMoveVal = sampleVal
+                bestMove = sampleNode
 
         return bestMove
 
     #Each step generates a random node and generates a random path for that node, so
     #pick the node that gets the best score
-    def ran_path(self, state, numSamples, playerNum):
+    def ran_path(self, state):
         if self.isTerminal(state):
-            return [self.getUtility(state, self.currentDepth), state]
+            return self.getUtility(state, self.currentDepth)
 
         self.currentDepth += 1
         
-        nextNodes = self.boardState.children()
-        ranMove = None
+        nextNodes = state.children()
+        ranMove = random.choice(nextNodes)
         checks = 0
 
-        infinity = float('inf')
-        bestMoveVal = -infinity
-        bestMoveVec = None
-        bestPlayerMove = None
-        
-        nextSamples = self.samples
-        while checks < numSamples:
-            nextPlayerNum = (playerNum + 1) % len(self.players)
-            ranMove = random.choice(nextNodes)
-            sampleVal = self.ran_path(ranMove, nextSamples, nextPlayerNum)
-            checks += 1
-            
-            sampleVec = sampleVal[0]
-            if bestMoveVal < sampleVec[playerNum]:
-                bestMoveVal = sampleVec[playerNum]
-                bestMoveVec = sampleVec
-                bestPlayerMove = ranMove
-
-        return [bestMoveVec, bestPlayerMove]
+        return self.ran_path(ranMove)
 
 
     #                     #
